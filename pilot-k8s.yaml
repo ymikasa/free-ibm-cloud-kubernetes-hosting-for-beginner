@@ -1,0 +1,10 @@
+apiVersion: operator.istio.io/v1alpha1
+kind: IstioOperator
+spec:
+  components:
+    pilot:
+      k8s:
+        resources:
+          requests:
+            cpu: 100m # override from default 500m
+            memory: 128Mi # ... default 2048Mi
