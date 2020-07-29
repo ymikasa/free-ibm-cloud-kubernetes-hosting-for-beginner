@@ -7,6 +7,9 @@ How to use IBM Cloud Kubernetes(30days Free), Cloudflare DNS(and flarectl), Let'
 Ensure to deploy the Bookinfo Istio example application with the below public URL.  
 https://sample.example.com:${node_port}/productpage
 
+> ⚠️ This document is written for the Windows Powershell users.
+You only need the Windows to run it. because you may not have a WSL environment.
+
 ## Prerequisites
 
 * IBM Cloud Account (Free)  
