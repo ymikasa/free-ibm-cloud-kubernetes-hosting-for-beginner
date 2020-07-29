@@ -1,10 +1,10 @@
 # Free IBM Cloud Kubernetes hosting for beginner
 
-How to use IBM Cloud Kubernetes, Cloudflare DNS, Let's encrypt, and Isito Ingress Gateway for Powershell windows user.
+How to use IBM Cloud Kubernetes, Cloudflare DNS(and flarectl), Let's encrypt(and cert-manager), and Isito Ingress Gateway(and VirtualServer) for Powershell windows user.
 
 ## Objectives
 
-Ensure to deploy the Bookinfo Istio example application with the below URL.  
+Ensure to deploy the Bookinfo Istio example application with the below public URL.  
 https://sample.yourdomain.com:${node_port}/productpage
 
 ## Prerequisites
