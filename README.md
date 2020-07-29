@@ -58,7 +58,7 @@ scoop bucket add extras
 scoop install jq go 7zip kubectl helm ibmcloud-cli
 ```
 
-> ℹ️ if you get an error you might need to change the execution policy (i.e. enable Powershell) with
+> ℹ️ If you get an error you might need to change the execution policy (i.e. enable Powershell) with
 
 ```powershell
 Set-ExecutionPolicy RemoteSigned -scope CurrentUser
@@ -228,7 +228,7 @@ metadata:
   ...
 ```
 
-#### Deploy cluster issuer (Cloudflare)
+#### Deploy Cluster Issuer (Cloudflare)
 
 Replace below 2 fields with your mail address for the Let's Encrypt issuer. If you use AWS Route53 instead of Cloudflare, please check https://cert-manager.io/docs/configuration/acme/dns01/route53/
 
@@ -257,17 +257,22 @@ spec:
 > ⚠️ This manifest is using Let's Encrypt production environment. Please be aware of the rate limits.  
 > https://letsencrypt.org/docs/rate-limits/
 
-- Deploy clster issuer
+- Deploy
 
 ```powershell
 kubectl apply -f clusterissuer-letsencrypt-prod.yaml
 kubectl describe clusterissuer letsencrypt-prod
+```
+
+Check logs (optional)
+
+```powershell
 kubectl -n cert-manager logs -l app=cert-manager -c cert-manager
 ```
 
-#### Deploy certificate request
+#### Deploy Certificate Request
 
-It will set TXT DNS record on Cloudflare (DNS-01 DNS name ownership check)  
+It will set TXT DNS record to the Cloudflare DNS (DNS-01 DNS name ownership check)  
 Replace below 3 fields with your domain for the let's encrypt certificate.
 
 ```powershell
@@ -303,7 +308,7 @@ Check logs (optional)
 kubectl -n cert-manager logs -l app=cert-manager -c cert-manager
 ```
 ```text
-I0706 06:31:20.368769       1 dns.go:133] cert-manager/controller/challenges/Check "msg"="waiting DNS record TTL to allow the DNS01 record to propagate for domain" "dnsName"="lifeinreno.com" "domain"="lifeinreno.com" "resource_kind"="Challenge" "resource_name"="istio-ingressgateway-certs-2862066918-2138811768-146870716" "resource_namespace"="istio-system" "type"="dns-01" "fqdn"="_acme-challenge.lifeinreno.com." "ttl"=60
+I0706 06:31:20.368769       1 dns.go:133] cert-manager/controller/challenges/Check "msg"="waiting DNS record TTL to allow the DNS01 record to propagate for domain" "dnsName"="******.com" "domain"="******.com" "resource_kind"="Challenge" "resource_name"="istio-ingressgateway-certs-2862066918-2138811768-146870716" "resource_namespace"="istio-system" "type"="dns-01" "fqdn"="_acme-challenge.******.com." "ttl"=60
 ...
 I0706 06:33:45.362372       1 sync.go:102] cert-manager/controller/orders "msg"="Order has already been completed, cleaning up any owned Challenge resources" "resource_kind"="Order" "resource_name"="istio-ingressgateway-certs-2862066918-2138811768" "resource_namespace"="istio-system"
 ```
@@ -338,7 +343,7 @@ If certificate cration is failed, You can import the backup certificate.
 kubectl apply -f istio-ingressgateway-certs-exports.yaml
 ```
 
-#### Annotate certificate secret for using it across namespaces
+#### Annotate Certificate Secret for using it across namespaces
 
 Annotate cert secret for kubed. It will be associated in base/namespace.yaml as the label "app=kubed".
 
@@ -346,7 +351,7 @@ Annotate cert secret for kubed. It will be associated in base/namespace.yaml as 
 kubectl annotate secret istio-ingressgateway-certs -n istio-system kubed.appscode.com/sync="app=kubed"
 ```
 
-#### Istio Ingress Gateway certificate validation
+#### Istio Ingress Gateway Certificate validation
 
 Validate istio ingress gateway's pre-defined mount point /etc/istio/ingressgateway-certs
 
@@ -366,7 +371,7 @@ lrwxrwxrwx 1 root root   14 Jul  6 06:31 tls.key -> ..data/tls.key
 
 ## Istio Ingress Gateway test
 
-### Deploy bookinfo application
+### Deploy BookInfo application
 
 - Modify kustomize patch for your domain
 
