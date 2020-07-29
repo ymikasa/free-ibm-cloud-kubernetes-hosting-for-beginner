@@ -123,7 +123,7 @@ $node_ip=$(ibmcloud ks workers -c cluster-01 --worker-pool default --json | jq -
 
 #### Assign URL to node_ip address
 
-I'm using cloudflare.
+I'm using Cloudflare.
 
 ```powershell
 $cname="sample"
@@ -177,6 +177,8 @@ kube-system    kubernetes-dashboard-5c898cc4d-bsldd         1/1     Running   2 
 kube-system    metrics-server-58d6cb57cd-pfbrv              2/2     Running   0          8d
 kube-system    vpn-79845b6f9d-mpclq                         1/1     Running   0          8d
 ```
+
+> ℹ️ Why use the customize parameter in pilot-k8s.yaml? This is to minimize the memory definition required for startup. it's important in the free cloud.
 
 ### Install certmanager
 
