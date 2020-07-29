@@ -17,7 +17,7 @@ Go to https://cloud.ibm.com/ and sign up for a free account. Your credit card in
 
 > ⚠️ Please set spending notification to avoid anormaly billings. https://cloud.ibm.com/billing/spending-notifications
 
-* Cloudflare Account (Free) optional 
+* Cloudflare Account (Free) optional  
 Go to https://cloudflare.com/ and sign up free account. Please create the zone as your domain name, then update your domain registrar's Name server 1,2 to Cloudflare's them.  
 You can use AWS Route53 instead of Cloudflare.
 
