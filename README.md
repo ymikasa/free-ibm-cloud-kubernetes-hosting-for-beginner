@@ -5,7 +5,7 @@ How to use IBM Cloud Kubernetes(30days Free), Cloudflare DNS(and flarectl), Let'
 ## Objectives
 
 Ensure to deploy the Bookinfo Istio example application with the below public URL.  
-https://sample.yourdomain.com:${node_port}/productpage
+https://sample.example.com:${node_port}/productpage
 
 ## Prerequisites
 
