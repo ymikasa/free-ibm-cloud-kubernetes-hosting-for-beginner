@@ -60,8 +60,7 @@ cp istioctl.exe $env:userprofile\scoop\shims
 
 ### Instal flarectl (optional)
 
-I'm using Cloudflare. flarectl is Cloudflare's official tool.
-To get flarectl.exe should install go lang.  
+I'm using Cloudflare. flarectl is Cloudflare's official tool. To get flarectl.exe should install go lang.  
 Please set PATH for flarectl.exe (e.g. $env:userprofile/go/bin)  
 Additinal information is https://github.com/cloudflare/cloudflare-go/tree/master/cmd/flarectl  
 
@@ -84,8 +83,7 @@ flarectl zone list
 
 ### Login
 
-Please check the cluster which region running on.  
-If the cluster is running on us-south, replace to $region="us-south".
+Please check the cluster which region running on. If the cluster is running on us-south, replace to $region="us-south".
 
 ```powershell
 $region="eu-de"
@@ -148,7 +146,7 @@ helm install kubed appscode/kubed --namespace kube-system
 
 ```powershell
 istioctl install -f bookinfo/istio/pilot-k8s.yaml
-k get po -A
+kubectl get po -A
 ```
 ```text
 NAMESPACE      NAME                                         READY   STATUS    RESTARTS   AGE
@@ -192,7 +190,7 @@ cert-manager-cainjector-87c85c6ff-bvtmx   1/1     Running   0          22s
 cert-manager-webhook-64dc9fff44-gc2b5     1/1     Running   0          22s
 ```
 
-#### Set cloudflare API key to k8s secret
+#### Set the Cloudflare API key to Kubernetes secret
 
 ```powershell
 $env:CF_API_EMAIL="******"
@@ -297,7 +295,7 @@ I0706 06:31:20.368769       1 dns.go:133] cert-manager/controller/challenges/Che
 I0706 06:33:45.362372       1 sync.go:102] cert-manager/controller/orders "msg"="Order has already been completed, cleaning up any owned Challenge resources" "resource_kind"="Order" "resource_name"="istio-ingressgateway-certs-2862066918-2138811768" "resource_namespace"="istio-system"
 ```
 ```powershell
-k -n istio-system describe certificaterequest
+kubectl -n istio-system describe certificaterequest
 ```
 ```text
 Events:
@@ -332,7 +330,7 @@ Annotate it fo kubed.
 kubectl annotate secret istio-ingressgateway-certs -n istio-system kubed.appscode.com/sync="app=kubed"
 ```
 
-#### Istio Ingress gateway certificate validation
+#### Istio Ingress Gateway certificate validation
 
 Validate istio ingress gateway's pre-defined mount point /etc/istio/ingressgateway-certs
 
@@ -350,7 +348,7 @@ lrwxrwxrwx 1 root root   14 Jul  6 06:31 tls.crt -> ..data/tls.crt
 lrwxrwxrwx 1 root root   14 Jul  6 06:31 tls.key -> ..data/tls.key
 ```
 
-## Istio ingress gateway test
+## Istio Ingress Gateway test
 
 ### Deploy bookinfo application
 
@@ -380,7 +378,7 @@ reviews-v2-7d79d5bd5d-75nzz       1/1     Running   0          66s
 reviews-v3-7dbcdcbc56-4967d       1/1     Running   0          66s
 ```
 
-### Check url
+### Check the BookInfo URL
 
 Access URL with istio ingress node port by Web browsers or curl.
 
