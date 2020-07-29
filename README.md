@@ -10,7 +10,7 @@ https://sample.example.com:${node_port}/productpage
 ## Prerequisites
 
 * IBM Cloud Account (Free)  
-Go to https://cloud.ibm.com/ and sign up for a free account. Your credit card information is needed for launch Kubernetes. however, you will not be charged for this tutorial.  
+Go to https://cloud.ibm.com/ and sign up for a free account. Your credit card information is needed for launch the Kubernetes cluster. However, you will not be charged for this tutorial.  
 Please set spending notification to avoid anormaly billings. https://cloud.ibm.com/billing/spending-notifications
 
 * Cloudflare Account (Free)  
