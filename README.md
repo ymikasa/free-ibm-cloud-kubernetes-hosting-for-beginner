@@ -93,8 +93,10 @@ Please check the cluster which region running on. If the cluster is running on u
 
 ```powershell
 $region="eu-de"
-ibmcloud login --apikey $(cat ~/.kube/cluster-01.json | jq -r .apikey) -r $region -g Default -q
+ibmcloud login --apikey $(cat ~/.kube/cluster-01-apikey.json | jq -r .apikey) -r $region -g Default -q
 ```
+
+> ℹ️ There are many other login methods besides the API Key.
 
 ### Set KUBECONFIG
 
