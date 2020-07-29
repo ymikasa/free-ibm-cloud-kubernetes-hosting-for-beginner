@@ -8,13 +8,14 @@ Ensure to deploy the Bookinfo Istio example application with the below public UR
 https://sample.example.com:${node_port}/productpage
 
 > ⚠️ This document is written for the Windows Powershell users.
-You only need the Windows to run it. because you may not have a WSL environment.
+You only need the Windows to run it. because you may not have the WSL environment.
 
 ## Prerequisites
 
 * IBM Cloud Account (Free)  
 Go to https://cloud.ibm.com/ and sign up for a free account. Your credit card information is needed for launch the Kubernetes cluster. However, you will not be charged for this tutorial.  
-Please set spending notification to avoid anormaly billings. https://cloud.ibm.com/billing/spending-notifications
+
+> ⚠️ Please set spending notification to avoid anormaly billings. https://cloud.ibm.com/billing/spending-notifications
 
 * Cloudflare Account (Free)  
 Go to https://cloudflare.com/ and sign up free account.
@@ -146,14 +147,14 @@ ping sample.example.com <# Your domain #>
 
 ### Install kubed
 
-You can use secrets across the namespace with kubed.
+You can use secrets across the namespace with kubed. It will be associated in base/namespace.yaml as the label "app=kubed".
 
 ```powershell
 helm repo add appscode https://charts.appscode.com/stable/
 helm install kubed appscode/kubed --namespace kube-system
 ```
 
-### Install istio
+### Install Istio
 
 ```powershell
 istioctl install -f bookinfo/istio/pilot-k8s.yaml
@@ -218,7 +219,7 @@ metadata:
   namespace: cert-manager
 type: Opaque
 data:
-  api-key.txt: $env:API_KEY
+  api-key.txt: $api_key
 "@ | Set-Content ~/.kube/cloudflare-api-key.yaml
 
 kubectl apply -f ~/.kube/cloudflare-api-key.yaml
@@ -262,6 +263,9 @@ spec:
 "@ | Set-Content clusterissuer-letsencrypt-prod.yaml
 ```
 
+> ⚠️ This manifest is using Let's Encrypt production environment. Please be aware of the rate limits.  
+> https://letsencrypt.org/docs/rate-limits/
+
 - Deploy clster issuer
 
 ```powershell
@@ -300,6 +304,11 @@ spec:
 
 ```powershell
 kubectl apply -f istio-ingressgateway-certs.yaml
+```
+
+Check logs (optional)
+
+```
 kubectl -n cert-manager logs -l app=cert-manager -c cert-manager
 ```
 ```text
@@ -307,6 +316,9 @@ I0706 06:31:20.368769       1 dns.go:133] cert-manager/controller/challenges/Che
 ...
 I0706 06:33:45.362372       1 sync.go:102] cert-manager/controller/orders "msg"="Order has already been completed, cleaning up any owned Challenge resources" "resource_kind"="Order" "resource_name"="istio-ingressgateway-certs-2862066918-2138811768" "resource_namespace"="istio-system"
 ```
+
+Check request result.
+
 ```powershell
 kubectl -n istio-system describe certificaterequest
 ```
@@ -337,7 +349,7 @@ kubectl apply -f istio-ingressgateway-certs-exports.yaml
 
 #### Annotate certificate secret for using it across namespaces
 
-Annotate it fo kubed.
+Annotate cert secret for kubed. It will be associated in base/namespace.yaml as the label "app=kubed".
 
 ```powershell
 kubectl annotate secret istio-ingressgateway-certs -n istio-system kubed.appscode.com/sync="app=kubed"
@@ -391,6 +403,8 @@ reviews-v2-7d79d5bd5d-75nzz       1/1     Running   0          66s
 reviews-v3-7dbcdcbc56-4967d       1/1     Running   0          66s
 ```
 
+> ⚠️ Deploy with overridden file "bookinfo/overlays/bookinfo-gateway-patch.yaml" by your domain. The bookinfo/base directory contain basic setting as template.
+
 ### Check the BookInfo URL
 
 Access URL with the Istio Ingress node port by Web browsers or curl.
@@ -400,7 +414,7 @@ $node_port=$(kubectl -n istio-system get svc istio-ingressgateway --output jsonp
 curl -v "https://sample.example.com:${node_port}/productpage" <# Your domain #>
 ```
 
-### Delete bookinfo application
+### Delete BookInfo application
 
 ```powershell
 kubectl delete -k bookinfo/overlay
