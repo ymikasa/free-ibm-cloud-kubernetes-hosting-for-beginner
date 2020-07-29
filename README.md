@@ -66,7 +66,7 @@ curl -kLO https://github.com/istio/istio/releases/download/1.6.4/istioctl-1.6.5-
 cp istioctl.exe $env:userprofile\scoop\shims <# Copy to any path on $env:PATH #>
 ```
 
-### Instal flarectl (optional)
+### Install flarectl (optional)
 
 I'm using Cloudflare. flarectl is Cloudflare's official tool. To get flarectl.exe should install go lang.  
 Please set PATH for flarectl.exe (e.g. $env:userprofile/go/bin)  
