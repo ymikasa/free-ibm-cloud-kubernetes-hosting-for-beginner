@@ -1,6 +1,6 @@
 # Free IBM Cloud Kubernetes hosting for beginner
 
-How to use IBM Cloud Kubernetes, Cloudflare DNS(and flarectl), Let's encrypt(and cert-manager), and Isito Ingress Gateway(and VirtualServer) for Powershell windows user.
+How to use IBM Cloud Kubernetes(30days Free), Cloudflare DNS(and flarectl), Let's Encrypt(and cert-manager), and Isito Ingress Gateway(and VirtualService) for Powershell windows user.
 
 ## Objectives
 
@@ -19,6 +19,8 @@ Go to https://cloudflare.com/ and sign up free account.
 * Your domain name ($8.03/year- )  
 If you don't have domains. Go to https://cloudflare.com/ and buy a cheap domain name ($8.03/year for .com)
 
+> ℹ️ Created secret files will be located on the ~/.kube directory.
+
 ## Setup IBM Kubernetes cluster
 
 ### Create the API key for CLI
@@ -26,7 +28,7 @@ If you don't have domains. Go to https://cloudflare.com/ and buy a cheap domain 
 The API key is used by the CLI login.  
 Top Menu -> Manage/Access(IAM)/API keys -> Create IBM Cloud API key(e.g. cluster-01) and download key as json file.
 
-- Rename and move apikey.json to a safe place (e.g. ~/kube/cluster-01-apikey.json)
+> ⚠️ Rename and move apikey.json to a safe place (e.g. ~/kube/cluster-01-apikey.json)
 
 ```
 move ~/Downloads/apikey.json ~/.kube/cluster-01-apikey.json
@@ -35,8 +37,10 @@ move ~/Downloads/apikey.json ~/.kube/cluster-01-apikey.json
 ### Create the Kubernetes (30days Free) cluster
 
 Make sure you have selected a plan "Free" cluster. Usually, the cluster created in the us-south(Dallas) region, however sometimes creates it in another region.  
-The free cluster is automatically forced to delete after 30 days without charges. Free!  
-In this document use the cluster name as 'cluster-01' 
+
+> ⚠️ The free cluster is automatically forced to delete after 30 days without charges. Free!  
+
+> ℹ️ In this document use the cluster name as 'cluster-01' 
 
 ## Install tools
 
@@ -45,9 +49,13 @@ In this document use the cluster name as 'cluster-01'
 ```powershell
 iwr -useb get.scoop.sh | iex
 scoop bucket add extras
-scoop install jq go 7zip
-scoop install kubectl helm
-scoop install ibmcloud-cli
+scoop install jq go 7zip kubectl helm ibmcloud-cli
+```
+
+> ℹ️ if you get an error you might need to change the execution policy (i.e. enable Powershell) with
+
+```powershell
+Set-ExecutionPolicy RemoteSigned -scope CurrentUser
 ```
 
 ### Install istioctl (1.6.5)
@@ -55,7 +63,7 @@ scoop install ibmcloud-cli
 ```powershell
 curl -kLO https://github.com/istio/istio/releases/download/1.6.4/istioctl-1.6.5-win.zip
 7z x istioctl-1.6.5-win.zip
-cp istioctl.exe $env:userprofile\scoop\shims
+cp istioctl.exe $env:userprofile\scoop\shims <# Copy to any path on $env:PATH #>
 ```
 
 ### Instal flarectl (optional)
@@ -64,12 +72,10 @@ I'm using Cloudflare. flarectl is Cloudflare's official tool. To get flarectl.ex
 Please set PATH for flarectl.exe (e.g. $env:userprofile/go/bin)  
 Additinal information is https://github.com/cloudflare/cloudflare-go/tree/master/cmd/flarectl  
 
-And set environment value:
-
-- $env:CF_API_EMAIL="******" # Cloudflare login
-- $env:CF_API_KEY="4a83******9106" # Cloudflare Global API Key
-
-Please access https://dash.cloudflare.com/profile/api-tokens to get Cloudflare Global API Key.
+> ⚠️ Please set environment values:  
+> - $env:CF_API_EMAIL="******" # Cloudflare login  
+> - $env:CF_API_KEY="4a83******9106" # Cloudflare Global API Key  
+> Please access https://dash.cloudflare.com/profile/api-tokens to get Cloudflare Global API Key.
 
 ```powershell
 $env:CF_API_EMAIL="******"
@@ -119,16 +125,15 @@ I'm using cloudflare.
 
 ```powershell
 $cname="sample"
-$cf_zone="lifeinreno.com"
-$dns_id=(flarectl --json dns list --zone="$cf_zone" --type="A" --name="$cname.$cf_zone" | jq -r .[].ID)
-$dns_id
+$cf_zone="example.com" <# Your domain #>
+$dns_id=flarectl --json dns list --zone="$cf_zone" --type="A" --name="$cname.$cf_zone" | jq -r .[].ID
 if ($dns_id) {
   flarectl dns update --id $dns_id --zone "$cf_zone" --content "$node_ip"
 } else {
   flarectl dns create --zone "$cf_zone" --type="A" --name="$cname.$cf_zone" --content "$node_ip"
 }
 ipconfig /flushdns
-ping sample.lifeinreno.com
+ping sample.example.com <# Your domain #>
 ```
 
 ## Install applications
@@ -225,7 +230,7 @@ api-key.txt:  37 bytes
 
 #### Deploy cluster issuer
 
-Replace below 2 fields with your mail address for the let's encrypt issuer.
+Replace below 2 fields with your mail address for the Let's Encrypt issuer.
 
 ```powershell
 @"
@@ -273,10 +278,10 @@ spec:
   secretName: istio-ingressgateway-certs
   duration: 2160h # 90d
   renewBefore: 360h # 15d
-  commonName: '*.example.com' # your domain
+  commonName: '*.example.com' # Your Domain
   dnsNames:
-  - 'example.com' # your domain
-  - '*.example.com' # your domain
+  - 'example.com' # Your Domain
+  - '*.example.com' # Your Domain
   issuerRef:
     name: letsencrypt-prod
     kind: ClusterIssuer
@@ -358,7 +363,7 @@ lrwxrwxrwx 1 root root   14 Jul  6 06:31 tls.key -> ..data/tls.key
 @"
 - op: replace
   path: "/spec/servers/0/hosts/0"
-  value: "sample.example.com"
+  value: "sample.example.com" # Your Domain
 "@ | Set-Content bookinfo/overlays/bookinfo-gateway-patch.yaml
 ```
 
@@ -380,11 +385,11 @@ reviews-v3-7dbcdcbc56-4967d       1/1     Running   0          66s
 
 ### Check the BookInfo URL
 
-Access URL with istio ingress node port by Web browsers or curl.
+Access URL with the Istio Ingress node port by Web browsers or curl.
 
 ```powershell
 $node_port=$(kubectl -n istio-system get svc istio-ingressgateway --output jsonpath='{.spec.ports[?(@.name==\"https\")].nodePort}')
-curl -v "https://sample.lifeinreno.com:${node_port}/productpage"
+curl -v "https://sample.example.com:${node_port}/productpage" <# Your domain #>
 ```
 
 ### Delete bookinfo application
