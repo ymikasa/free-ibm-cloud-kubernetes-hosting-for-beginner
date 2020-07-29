@@ -17,8 +17,9 @@ Go to https://cloud.ibm.com/ and sign up for a free account. Your credit card in
 
 > ⚠️ Please set spending notification to avoid anormaly billings. https://cloud.ibm.com/billing/spending-notifications
 
-* Cloudflare Account (Free)  
-Go to https://cloudflare.com/ and sign up free account.
+* Cloudflare Account (Free) optional 
+Go to https://cloudflare.com/ and sign up free account. Please create the zone as your domain name, then update your domain registrar's Name server 1,2 to Cloudflare's them.  
+You can use AWS Route53 instead of Cloudflare.
 
 * Your domain name ($8.03/year- )  
 If you don't have domains. Go to https://cloudflare.com/ and buy a cheap domain name ($8.03/year for .com)
@@ -32,10 +33,10 @@ If you don't have domains. Go to https://cloudflare.com/ and buy a cheap domain 
 The API key is used by the CLI login.  
 Top Menu -> Manage/Access(IAM)/API keys -> Create IBM Cloud API key(e.g. cluster-01) and download key as json file.
 
-> ⚠️ Rename and move apikey.json to a safe place (e.g. ~/kube/cluster-01-apikey.json)
+> ⚠️ Rename and move apikey.json to a safe place (e.g. $home/kube/cluster-01-apikey.json)
 
 ```
-move ~/Downloads/apikey.json ~/.kube/cluster-01-apikey.json
+move ~/Downloads/apikey.json $home/.kube/cluster-01-apikey.json
 ```
 
 ### Create the Kubernetes (30days Free) cluster
@@ -78,8 +79,8 @@ Please set PATH for flarectl.exe (e.g. $env:userprofile/go/bin)
 Additinal information is https://github.com/cloudflare/cloudflare-go/tree/master/cmd/flarectl  
 
 > ⚠️ Please set environment values:  
-> - $env:CF_API_EMAIL="******" # Cloudflare login  
-> - $env:CF_API_KEY="4a83******9106" # Cloudflare Global API Key  
+> - $env:CF_API_EMAIL="******" <- Cloudflare login  
+> - $env:CF_API_KEY="4a83******9106" <- Cloudflare Global API Key  
 > Please access https://dash.cloudflare.com/profile/api-tokens to get Cloudflare Global API Key.
 
 ```powershell
@@ -126,9 +127,9 @@ NAME            STATUS   ROLES    AGE   VERSION       INTERNAL-IP     EXTERNAL-I
 $node_ip=$(ibmcloud ks workers -c cluster-01 --worker-pool default --json | jq -r .[0].publicIP)
 ```
 
-#### Assign URL to node_ip address
+#### Assign URL to node_ip address (Cloudflare)
 
-I'm using Cloudflare.
+Add "A" record with node IP address to DNS. I'm using Cloudflare. If you use AWS Route53, Plase set via AWS CLI or AWS Console.
 
 ```powershell
 $cname="sample"
@@ -206,40 +207,30 @@ cert-manager-webhook-64dc9fff44-gc2b5     1/1     Running   0          22s
 
 #### Set the Cloudflare API key to Kubernetes secret
 
+Secret data must be base64. If you use AWS Route53 instead of Cloudflare, please check https://cert-manager.io/docs/configuration/acme/dns01/route53/
+
 ```powershell
 $env:CF_API_EMAIL="******"
 $env:CF_API_KEY="4a83******9106"
-$api_key=[convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("$env:CF_API_KEY"))
 
-@"
-apiVersion: v1
-kind: Secret
-metadata:
-  name: cloudflare-api-key
-  namespace: cert-manager
-type: Opaque
-data:
-  api-key.txt: $api_key
-"@ | Set-Content ~/.kube/cloudflare-api-key.yaml
-
-kubectl apply -f ~/.kube/cloudflare-api-key.yaml
-kubrctl -n cert-manager describe secret cloudflare-api-key
+kubectl -n cert-manager create secret generic cloudflare-api-key --from-literal=secret-access-key=$env:CF_API_KEY
+kubectl -n cert-manager get secret cloudflare-api-key -o yaml     
 ```
 ```text
-Name:         cloudflare-api-key
-Namespace:    cert-manager
-Labels:       <none>
-Annotations:
-Type:         Opaque
-
-Data
-====
-api-key.txt:  37 bytes
+apiVersion: v1
+data:
+  api-key.txt: NGE******g==
+kind: Secret
+metadata:
+  ...
+  name: cloudflare-api-key
+  namespace: cert-manager
+  ...
 ```
 
-#### Deploy cluster issuer
+#### Deploy cluster issuer (Cloudflare)
 
-Replace below 2 fields with your mail address for the Let's Encrypt issuer.
+Replace below 2 fields with your mail address for the Let's Encrypt issuer. If you use AWS Route53 instead of Cloudflare, please check https://cert-manager.io/docs/configuration/acme/dns01/route53/
 
 ```powershell
 @"
