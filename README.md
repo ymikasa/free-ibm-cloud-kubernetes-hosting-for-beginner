@@ -39,8 +39,9 @@ move ~/Downloads/apikey.json ~/.kube/cluster-01-apikey.json
 Make sure you have selected a plan "Free" cluster. Usually, the cluster created in the us-south(Dallas) region, however sometimes creates it in another region.  
 
 > ⚠️ The free cluster is automatically forced to delete after 30 days without charges. Free!  
+> ⚠️ It's recommended to upgrade to 1.18 for master and worker nodes.
 
-> ℹ️ In this document use the cluster name as 'cluster-01' 
+> ℹ️ In this document use the cluster name as 'cluster-01'  
 
 ## Install tools
 
