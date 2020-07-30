@@ -64,6 +64,18 @@ Go to https://cloudflare.com/ and sign up free account. Please create the zone a
 | $env:AWS_SECRET_ACCESS_KEY | ****** | AWS Secret Access Key |
 | $env:AWS_REGION | us-east-2 | AWS Region |
 
+#### Files
+
+| File  | Description |
+| - | - |
+| bookinfo/ | BookInfo application |
+| bookinfo/overlays/bookinfo-gateway-patch.yaml | Overwright to bookinfo/base/bookinfo-gateway.yaml with your domain |
+| $home/.kube/cluster-01-apikey.json | IBM Cloud API Key |
+| aws-route53.json | "A" record add/modify to AWS Route53  |
+| ${env:KUBECONFIG}.bak | Backup of kubeconfig file |
+| clusterissuer-letsencrypt-prod.yaml | Your cert-manager ClusterIssuer |
+| pilot-k8s.yaml | Istio install parameters, reduced request cpu and memory |
+
 ### Create the API key for CLI
 
 The API key is used by the CLI login.  
@@ -197,12 +209,11 @@ if ((aws route53 list-resource-record-sets --hosted-zone-id $dns_id `
   --query "ResourceRecordSets[?Name=='$subdomain.$domain.'].ResourceRecords[0].Value" --output text).length -ne 0) {
   $action = "UPSERT"
 }
-
 @"
 {"Changes": [{
   "Action": "$action",
   "ResourceRecordSet": {
-    "Name": "sample.openstackiot.com", "Type": "A", "TTL": 300, "ResourceRecords": [{ "Value": "$node_ip" }]
+    "Name": "$subdomain.$domain", "Type": "A", "TTL": 300, "ResourceRecords": [{ "Value": "$node_ip" }]
   }
 }]}
 "@ | Set-Content aws-route53.json
@@ -214,7 +225,7 @@ aws route53 change-resource-record-sets --hosted-zone-id $dns_id --change-batch 
 
 ```
 ipconfig /flushdns
-ping -n 3 "$subdomain.$domain"   <# Your domain #>
+ping -n 3 "$subdomain.$domain" <# Your subdomain.domain #>
 ```
 
 ## Install applications
