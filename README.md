@@ -17,16 +17,52 @@ Go to https://cloud.ibm.com/ and sign up for a free account. Your credit card in
 
 > ⚠️ Please set spending notification to avoid anormaly billings. https://cloud.ibm.com/billing/spending-notifications
 
-* Cloudflare Account (Free) optional  
-Go to https://cloudflare.com/ and sign up free account. Please create the zone as your domain name, then update your domain registrar's Name server 1,2 to Cloudflare's them.  
-You can use AWS Route53 instead of Cloudflare.
-
 * Your domain name ($8.03/year- )  
 If you don't have domains. Go to https://cloudflare.com/ and buy a cheap domain name ($8.03/year for .com)
 
-> ℹ️ Created secret files will be located on the ~/.kube directory.
+* Cloudflare Account (Free)  
+Go to https://cloudflare.com/ and sign up free account. Please create the zone as your domain name, then update your domain registrar's Name server 1,2 to Cloudflare's them.  
+
+*OR*
+
+* AWS Account for Route53  
+
 
 ## Setup IBM Kubernetes cluster
+
+### Value definitions explanation
+
+#### Values for tools
+
+| Key  |  Sample value | Description |
+| - | - |- |
+| $home | | User home folder |
+| $env:userprofile/go | | Go language |
+| $env:userprofile/scoop | | scoop |
+| $env:KUBECONFIG | $home/.kube/config-cluster-01.yaml | kubeconfig file |
+| $home/.kube | | Kubernetes configuration folder |
+| $letsenctypt_email | yourmailaddress@example.com | Let's Encrypt email address |
+| $node_ip | 123.123.123.123 | Node IP of Istio Ingress Gateway IP |
+| $node_port | 30861 | HTTPS port of Istio Ingress Gateway |
+| $region | eu-de | IBM Cloud Kuberbetes Cluster Region |
+| $domain | example.com | Your domain |
+| $subdomain | sample | Created subdomain |
+
+#### Values (Cloudflare)
+
+| Key  |  Sample value | Description |
+| - | - |- |
+| $env:CF_API_EMAIL | yourmailaddress@example.com | Cloudflare Email address|
+| $env:CF_API_KEY | ****** | Cloudflare API Key |
+| $cloudflare_email | yourmailaddress@example.com | |
+
+#### Values (AWS Route53)
+
+| Key  |  Sample value | Description |
+| - | - |- |
+| $env:AWS_ACCESS_KEY_ID | ****** | AWS Access Key |
+| $env:AWS_SECRET_ACCESS_KEY | ****** | AWS Secret Access Key |
+| $env:AWS_REGION | us-east-2 | AWS Region |
 
 ### Create the API key for CLI
 
@@ -34,6 +70,9 @@ The API key is used by the CLI login.
 Top Menu -> Manage/Access(IAM)/API keys -> Create IBM Cloud API key(e.g. cluster-01) and download key as json file.
 
 > ⚠️ Rename and move apikey.json to a safe place (e.g. $home/kube/cluster-01-apikey.json)
+
+> ℹ️ Created secret files will be located on the $home/.kube directory.
+
 
 ```
 move ~/Downloads/apikey.json $home/.kube/cluster-01-apikey.json
@@ -46,16 +85,18 @@ Make sure you have selected a plan "Free" cluster. Usually, the cluster created 
 > ⚠️ The free cluster is automatically forced to delete after 30 days without charges. Free!  
 > ⚠️ It's recommended to upgrade to 1.18 for master and worker nodes.
 
-> ℹ️ In this document use the cluster name as 'cluster-01'  
+> ℹ️ In this document use the cluster name as 'cluster-01' and Default resource group.
 
 ## Install tools
 
-### Install Scoop and jq(1.6), go(1.14.4), kubectl (1.18.5), helm(3.2.4)
+### Install Scoop and jq(1.6), go(1.14.4), kubectl (1.18.5), helm(3.2.4), and IBM Cloud CLI+Plugin
 
 ```powershell
 iwr -useb get.scoop.sh | iex
 scoop bucket add extras
 scoop install jq go 7zip kubectl helm ibmcloud-cli
+ibmcloud plugin install kubernetes-service
+mkdir $home/.kube
 ```
 
 > ℹ️ If you get an error you might need to change the execution policy (i.e. enable Powershell) with
@@ -72,7 +113,7 @@ curl -kLO https://github.com/istio/istio/releases/download/1.6.4/istioctl-1.6.5-
 cp istioctl.exe $env:userprofile\scoop\shims <# Copy to any path on $env:PATH #>
 ```
 
-### Install flarectl (optional)
+### Install flarectl (Cloudflare)
 
 I'm using Cloudflare. flarectl is Cloudflare's official tool. To get flarectl.exe should install go lang.  
 Please set PATH for flarectl.exe (e.g. $env:userprofile/go/bin)  
@@ -99,7 +140,7 @@ Please check the cluster which region running on. If the cluster is running on u
 
 ```powershell
 $region="eu-de"
-ibmcloud login --apikey $(cat ~/.kube/cluster-01-apikey.json | jq -r .apikey) -r $region -g Default -q
+ibmcloud login --apikey $(cat $home/.kube/cluster-01-apikey.json | jq -r .apikey) -r $region -g Default -q
 ```
 
 > ℹ️ There are many other login methods besides the API Key.
@@ -109,10 +150,10 @@ ibmcloud login --apikey $(cat ~/.kube/cluster-01-apikey.json | jq -r .apikey) -r
 The kubeconfig YAML file will be overwritten by the IBM cloud CLI command.
 
 ```powershell
-ibmcloud plugin install kubernetes-service
-mkdir $home/.kube
 $env:KUBECONFIG="$home/.kube/config-cluster-01.yaml"
-move $env:KUBECONFIG ${env:KUBECONFIG}.bak
+if (Test-Path $env:KUBECONFIG) {
+  move $env:KUBECONFIG "${env:KUBECONFIG}.bak"
+}
 ibmcloud ks cluster config -c cluster-01
 ```
 
@@ -127,21 +168,53 @@ NAME            STATUS   ROLES    AGE   VERSION       INTERNAL-IP     EXTERNAL-I
 $node_ip=ibmcloud ks workers -c cluster-01 --worker-pool default --json | jq -r .[0].publicIP
 ```
 
-#### Assign URL to node_ip address (Cloudflare)
+### Set Your subdomain domain to values
+
+```
+$domain="example.com" <# Your domain #>
+$subdomain="sample"
+```
+
+### Assign URL to node_ip address (Cloudflare)
 
 Add "A" record with node IP address to DNS. I'm using Cloudflare. If you use AWS Route53, Plase set via AWS CLI or AWS Console.
 
 ```powershell
-$cname="sample"
-$cf_zone="example.com" <# Your domain #>
-$dns_id=flarectl --json dns list --zone="$cf_zone" --type="A" --name="$cname.$cf_zone" | jq -r .[].ID
+$dns_id=flarectl --json dns list --zone="$domain" --type="A" --name="$subdomain.$domain" | jq -r .[].ID
 if ($dns_id) {
-  flarectl dns update --id $dns_id --zone "$cf_zone" --content "$node_ip"
+  flarectl dns update --id $dns_id --zone "$domain" --content "$node_ip"
 } else {
-  flarectl dns create --zone "$cf_zone" --type="A" --name="$cname.$cf_zone" --content "$node_ip"
+  flarectl dns create --zone "$domain" --type="A" --name="$subdomain.$domain" --content "$node_ip"
 }
+```
+
+### Assign URL to node_ip address (AWS Route53)
+
+```
+$dns_id=aws route53 list-hosted-zones-by-name --dns-name "$domain" --query "HostedZones[?Name=='$domain.'].Id" --output text
+$action = "CREATE"
+if ((aws route53 list-resource-record-sets --hosted-zone-id $dns_id `
+  --query "ResourceRecordSets[?Name=='$subdomain.$domain.'].ResourceRecords[0].Value" --output text).length -ne 0) {
+  $action = "UPSERT"
+}
+
+@"
+{"Changes": [{
+  "Action": "$action",
+  "ResourceRecordSet": {
+    "Name": "sample.openstackiot.com", "Type": "A", "TTL": 300, "ResourceRecords": [{ "Value": "$node_ip" }]
+  }
+}]}
+"@ | Set-Content aws-route53.json
+
+aws route53 change-resource-record-sets --hosted-zone-id $dns_id --change-batch file://aws-route53.json
+```
+
+### Ping check
+
+```
 ipconfig /flushdns
-ping sample.example.com <# Your domain #>
+ping -n 3 "$subdomain.$domain"   <# Your domain #>
 ```
 
 ## Install applications
@@ -152,13 +225,13 @@ You can use secrets across the namespace with kubed. It will be associated in ba
 
 ```powershell
 helm repo add appscode https://charts.appscode.com/stable/
-helm install kubed appscode/kubed --namespace kube-system
+helm install kubed appscode/kubed --namespace kube-system --wait
 ```
 
 ### Install Istio
 
 ```powershell
-istioctl install -f bookinfo/istio/pilot-k8s.yaml
+istioctl install -f pilot-k8s.yaml
 kubectl get po -A
 ```
 ```text
@@ -205,13 +278,13 @@ cert-manager-cainjector-87c85c6ff-bvtmx   1/1     Running   0          22s
 cert-manager-webhook-64dc9fff44-gc2b5     1/1     Running   0          22s
 ```
 
-#### Set the Cloudflare API key to Kubernetes secret
-
-Secret data must be base64. If you use AWS Route53 instead of Cloudflare, please check https://cert-manager.io/docs/configuration/acme/dns01/route53/
+#### Set the API key to Kubernetes secret (Cloudflare)
 
 ```powershell
 $env:CF_API_EMAIL="******"
 $env:CF_API_KEY="4a83******9106"
+$letsenctypt_email="yourmailaddress@example.com"
+$cloudflare_email="yourmailaddress@example.com"
 
 kubectl -n cert-manager create secret generic cloudflare-api-key --from-literal=secret-access-key=$env:CF_API_KEY
 kubectl -n cert-manager get secret cloudflare-api-key -o yaml     
@@ -228,9 +301,31 @@ metadata:
   ...
 ```
 
-#### Deploy Cluster Issuer (Cloudflare)
+#### Set the API key to Kubernetes secret (AWS Route53)
 
-Replace below 2 fields with your mail address for the Let's Encrypt issuer. If you use AWS Route53 instead of Cloudflare, please check https://cert-manager.io/docs/configuration/acme/dns01/route53/
+```powershell
+$env:AWS_ACCESS_KEY_ID="AKI******"
+$env:AWS_SECRET_ACCESS_KEY="******"
+$env:AWS_REGION="us-east-2" <# Your AWS region #>
+$letsenctypt_email="yourmailaddress@example.com"
+
+kubectl -n cert-manager create secret generic prod-route53-credentials-secret --from-literal=secret-access-key=$env:AWS_SECRET_ACCESS_KEY
+kubectl -n cert-manager get secret prod-route53-credentials-secret -o yaml
+```
+
+```text
+apiVersion: v1
+data:
+  secret-access-key: NGE******g==
+kind: Secret
+metadata:
+  ...
+  name: prod-route53-credentials-secret
+  namespace: cert-manager
+  ...
+```
+
+#### Deploy Cluster Issuer (Cloudflare)
 
 ```powershell
 @"
@@ -241,13 +336,13 @@ metadata:
 spec:
   acme:
     server: https://acme-v02.api.letsencrypt.org/directory
-    email: youremail@example.com # Your enmail address
+    email: $letsenctypt_email
     privateKeySecretRef:
       name: letsencrypt-prod
     solvers:
     - dns01:
         cloudflare:
-          email: youremail@example.com # Your enmail address
+          email: $cloudflare_email
           apiKeySecretRef:
             name: cloudflare-api-key
             key: api-key.txt
@@ -256,6 +351,31 @@ spec:
 
 > ⚠️ This manifest is using Let's Encrypt production environment. Please be aware of the rate limits.  
 > https://letsencrypt.org/docs/rate-limits/
+
+#### Deploy Cluster Issuer (AWS Route53)
+
+```powershell
+@"
+apiVersion: cert-manager.io/v1alpha2
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: $letsenctypt_email
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    solvers:
+    - dns01:
+        route53:
+          region: $env:AWS_REGION
+          accessKeyID: $env:AWS_ACCESS_KEY_ID
+          secretAccessKeySecretRef:
+            name: prod-route53-credentials-secret
+            key: secret-access-key
+"@ | Set-Content clusterissuer-letsencrypt-prod.yaml
+```
 
 - Deploy
 
@@ -272,8 +392,7 @@ kubectl -n cert-manager logs -l app=cert-manager -c cert-manager
 
 #### Deploy Certificate Request
 
-It will set TXT DNS record to the Cloudflare DNS (DNS-01 DNS name ownership check)  
-Replace below 3 fields with your domain for the let's encrypt certificate.
+It will add a TXT DNS record to the Cloudflare/Route53 DNS (DNS01 challenge)  
 
 ```powershell
 @"
@@ -286,10 +405,10 @@ spec:
   secretName: istio-ingressgateway-certs
   duration: 2160h # 90d
   renewBefore: 360h # 15d
-  commonName: '*.example.com' # Your Domain
+  commonName: '*.$domain'
   dnsNames:
-  - 'example.com' # Your Domain
-  - '*.example.com' # Your Domain
+  - '$domain'
+  - '*.$domain'
   issuerRef:
     name: letsencrypt-prod
     kind: ClusterIssuer
@@ -324,15 +443,16 @@ Events:
   ----    ------             ----   ----          -------
   Normal  OrderCreated       2m50s  cert-manager  Created Order resource istio-system/istio-ingressgateway-certs-2862066918-2138811768
   Normal  CertificateIssued  12s    cert-manager  Certificate fetched from issuer successfully
----
 ```
+
+> ℹ️ For AWS Route53, If you got failed results, Please check [IAM policy](https://cert-manager.io/docs/configuration/acme/dns01/route53/).
 
 #### Export certificate (optional)
 
 The backup certificate will be used for importing later.
 
 ```powershell
-kubectl -n istio-system get secret istio-ingressgateway-certs -o yaml > ~/.kube/istio-ingressgateway-certs-exports.yaml
+kubectl -n istio-system get secret istio-ingressgateway-certs -o yaml > $home/.kube/istio-ingressgateway-certs-exports.yaml
 ```
 
 #### Import (optional)
@@ -379,7 +499,7 @@ lrwxrwxrwx 1 root root   14 Jul  6 06:31 tls.key -> ..data/tls.key
 @"
 - op: replace
   path: "/spec/servers/0/hosts/0"
-  value: "sample.example.com" # Your Domain
+  value: "$subdomain.$domain"
 "@ | Set-Content bookinfo/overlays/bookinfo-gateway-patch.yaml
 ```
 
@@ -391,12 +511,12 @@ kubectl -n bookinfo get po -w
 ```
 ```text
 NAME                              READY   STATUS    RESTARTS   AGE
-details-v1-558b8b4b76-k5gsx       1/1     Running   0          69s
-productpage-v1-6987489c74-bfh7m   1/1     Running   0          68s
-ratings-v1-7dc98c7588-x944t       1/1     Running   0          67s
-reviews-v1-7f99cc4496-lhh94       1/1     Running   0          67s
-reviews-v2-7d79d5bd5d-75nzz       1/1     Running   0          66s
-reviews-v3-7dbcdcbc56-4967d       1/1     Running   0          66s
+details-v1-558b8b4b76-j2tff       2/2     Running   0          78s
+productpage-v1-6987489c74-j4tcg   2/2     Running   0          77s
+ratings-v1-7dc98c7588-2l9kq       2/2     Running   0          77s
+reviews-v1-7f99cc4496-m7gwq       2/2     Running   0          76s
+reviews-v2-7d79d5bd5d-t5gkq       2/2     Running   0          75s
+reviews-v3-7dbcdcbc56-txc57       2/2     Running   0          75s
 ```
 
 > ⚠️ Deploy with overridden file "bookinfo/overlays/bookinfo-gateway-patch.yaml" by your domain. The bookinfo/base directory contain basic setting as template.
@@ -407,7 +527,9 @@ Access URL with the Istio Ingress node port by Web browsers or curl.
 
 ```powershell
 $node_port=$(kubectl -n istio-system get svc istio-ingressgateway --output jsonpath='{.spec.ports[?(@.name==\"https\")].nodePort}')
-curl -v "https://sample.example.com:${node_port}/productpage" <# Your domain #>
+curl -kv "https://${subdomain}.${domain}:${node_port}/productpage"
+
+start "$env:programfiles (x86)\Google\Chrome\Application\Chrome.exe" "https://${subdomain}.${domain}:${node_port}/productpage"
 ```
 
 ### Delete BookInfo application
