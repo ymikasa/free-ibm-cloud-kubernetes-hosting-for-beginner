@@ -1,4 +1,4 @@
-# Free IBM Cloud Kubernetes hosting for beginner
+# Free IBM Cloud Kubernetes hosting for beginners
 
 How to use IBM Cloud Kubernetes(30days Free), Cloudflare DNS(and flarectl), Let's Encrypt(and cert-manager), and Isito Ingress Gateway(and VirtualService) for Powershell windows user.
 
@@ -124,7 +124,7 @@ kubectl get no -o wide
 ```text
 NAME            STATUS   ROLES    AGE   VERSION       INTERNAL-IP     EXTERNAL-IP      OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
 10.144.183.23   Ready    <none>   86m   v1.18.6+IKS   10.144.183.23   169.51.203.243   Ubuntu 16.04.6 LTS   4.4.0-185-generic   containerd://1.3.4
-$node_ip=$(ibmcloud ks workers -c cluster-01 --worker-pool default --json | jq -r .[0].publicIP)
+$node_ip=ibmcloud ks workers -c cluster-01 --worker-pool default --json | jq -r .[0].publicIP
 ```
 
 #### Assign URL to node_ip address (Cloudflare)
