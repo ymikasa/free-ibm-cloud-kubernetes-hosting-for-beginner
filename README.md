@@ -25,7 +25,7 @@ Go to https://cloudflare.com/ and sign up free account. Please create the zone a
 
 *OR*
 
-* AWS Account for Route53  
+* AWS Account for Route 53  
 
 
 ## Setup IBM Kubernetes cluster
@@ -56,7 +56,7 @@ Go to https://cloudflare.com/ and sign up free account. Please create the zone a
 | $env:CF_API_KEY | ****** | Cloudflare API Key |
 | $cloudflare_email | yourmailaddress@example.com | |
 
-#### Values (AWS Route53)
+#### Values (AWS Route 53)
 
 | Key  |  Sample value | Description |
 | - | - |- |
@@ -71,7 +71,7 @@ Go to https://cloudflare.com/ and sign up free account. Please create the zone a
 | bookinfo/ | BookInfo application |
 | bookinfo/overlays/bookinfo-gateway-patch.yaml | Overwright to bookinfo/base/bookinfo-gateway.yaml with your domain |
 | $home/.kube/cluster-01-apikey.json | IBM Cloud API Key |
-| aws-route53.json | "A" record add/modify to AWS Route53  |
+| aws-route53.json | "A" record add/modify to AWS Route 53  |
 | ${env:KUBECONFIG}.bak | Backup of kubeconfig file |
 | clusterissuer-letsencrypt-prod.yaml | Your cert-manager ClusterIssuer |
 | pilot-k8s.yaml | Istio install parameters, reduced request cpu and memory |
@@ -189,7 +189,7 @@ $subdomain="sample"
 
 ### Assign URL to node_ip address (Cloudflare)
 
-Add "A" record with node IP address to DNS. I'm using Cloudflare. If you use AWS Route53, Plase set via AWS CLI or AWS Console.
+Add "A" record with node IP address to DNS. I'm using Cloudflare.
 
 ```powershell
 $dns_id=flarectl --json dns list --zone="$domain" --type="A" --name="$subdomain.$domain" | jq -r .[].ID
@@ -200,7 +200,7 @@ if ($dns_id) {
 }
 ```
 
-### Assign URL to node_ip address (AWS Route53)
+### Assign URL to node_ip address (AWS Route 53)
 
 ```
 $dns_id=aws route53 list-hosted-zones-by-name --dns-name "$domain" --query "HostedZones[?Name=='$domain.'].Id" --output text
@@ -297,7 +297,7 @@ $env:CF_API_KEY="4a83******9106"
 $letsenctypt_email="yourmailaddress@example.com"
 $cloudflare_email="yourmailaddress@example.com"
 
-kubectl -n cert-manager create secret generic cloudflare-api-key --from-literal=secret-access-key=$env:CF_API_KEY
+kubectl -n cert-manager create secret generic cloudflare-api-key --from-literal=api-key.txt=$env:CF_API_KEY
 kubectl -n cert-manager get secret cloudflare-api-key -o yaml     
 ```
 ```text
@@ -312,7 +312,7 @@ metadata:
   ...
 ```
 
-#### Set the API key to Kubernetes secret (AWS Route53)
+#### Set the API key to Kubernetes secret (AWS Route 53)
 
 ```powershell
 $env:AWS_ACCESS_KEY_ID="AKI******"
@@ -363,7 +363,7 @@ spec:
 > ⚠️ This manifest is using Let's Encrypt production environment. Please be aware of the rate limits.  
 > https://letsencrypt.org/docs/rate-limits/
 
-#### Deploy Cluster Issuer (AWS Route53)
+#### Deploy Cluster Issuer (AWS Route 53)
 
 ```powershell
 @"
@@ -403,7 +403,7 @@ kubectl -n cert-manager logs -l app=cert-manager -c cert-manager
 
 #### Deploy Certificate Request
 
-It will add a TXT DNS record to the Cloudflare/Route53 DNS (DNS01 challenge)  
+It will add a TXT DNS record to the Cloudflare/Route 53 DNS (DNS01 challenge)  
 
 ```powershell
 @"
@@ -456,7 +456,7 @@ Events:
   Normal  CertificateIssued  12s    cert-manager  Certificate fetched from issuer successfully
 ```
 
-> ℹ️ For AWS Route53, If you got failed results, Please check [IAM policy](https://cert-manager.io/docs/configuration/acme/dns01/route53/).
+> ℹ️ For AWS Route 53, If you got failed results, Please check [IAM policy](https://cert-manager.io/docs/configuration/acme/dns01/route53/).
 
 #### Export certificate (optional)
 
