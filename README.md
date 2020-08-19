@@ -1,4 +1,4 @@
-# Free IBM Cloud Kubernetes hosting for beginners
+# Free IBM Cloud Kubernetes Hosting for Beginners
 
 How to use IBM Cloud Kubernetes(30days Free), Cloudflare DNS(and flarectl), Let's Encrypt(and cert-manager), and Isito Ingress Gateway(and VirtualService) for Powershell windows user.
 
@@ -9,6 +9,8 @@ https://sample.example.com:${node_port}/productpage
 
 > ⚠️ This document is written for Windows Powershell users.
 You only need Windows to run it. because you may not have the WSL environment.
+
+<details><summary>Table of Contents</summary>
 
 <!-- @import "[TOC]" {cmd="toc" depthFrom=2 depthTo=6 orderedList=false} -->
 
@@ -55,6 +57,8 @@ You only need Windows to run it. because you may not have the WSL environment.
   - [Delete BookInfo application](#delete-bookinfo-application)
 
 <!-- /code_chunk_output -->
+
+</details>
 
 ## Prerequisites
 
@@ -154,7 +158,7 @@ Make sure you have selected a plan "Free" cluster. Usually, the cluster created 
 
 ## Install tools
 
-### Install Scoop and jq(1.6), go(1.14.4), kubectl (1.18.5), helm(3.2.4), and IBM Cloud CLI+Plugin
+### Install Scoop and jq(1.6+), go(1.14.4+), kubectl (1.18.5+), helm(3.2.4+), and IBM Cloud CLI+Plugin
 
 ```powershell
 iwr -useb get.scoop.sh | iex
@@ -170,7 +174,7 @@ mkdir $home/.kube
 Set-ExecutionPolicy RemoteSigned -scope CurrentUser
 ```
 
-### Install istioctl (1.6.8)
+### Install istioctl (1.6.8+)
 
 ```powershell
 curl -kLO https://github.com/istio/istio/releases/download/1.6.8/istioctl-1.6.8-win.zip
@@ -327,7 +331,7 @@ kube-system  vpn-79845b6f9d-mpclq                       1/1   Running 0        8
 
 > ℹ️ Why use the customize parameter in pilot-k8s.yaml? This is to minimize the memory definition required for startup. it's important in the free cloud.
 
-### Install certmanager
+### Install cert-manager
 
 ```powershell
 kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v0.15.1/cert-manager.crds.yaml
@@ -548,7 +552,7 @@ kubectl annotate secret istio-ingressgateway-certs -n istio-system kubed.appscod
 Validate istio ingress gateway's pre-defined mount point /etc/istio/ingressgateway-certs
 
 ```powershell
-kubectl exec -it -n istio-system $(k -n istio-system get pods -l istio=ingressgateway -o jsonpath='{.items[0].metadata.name}') -- ls -al /etc/istio/ingressgateway-certs
+kubectl exec -it -n istio-system $(k -n istio-system get pods -l istio=ingressgateway -o jsonpath='{.items[0].metadata.name}') `-`- ls -al /etc/istio/ingressgateway-certs
 ```
 Results:
 ```text
@@ -609,5 +613,5 @@ start "$env:programfiles (x86)\Google\Chrome\Application\Chrome.exe" "https://${
 ### Delete BookInfo application
 
 ```powershell
-kubectl delete -k bookinfo/overlay
+kubectl delete -k bookinfo/overlays
 ```
