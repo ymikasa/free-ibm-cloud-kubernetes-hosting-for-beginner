@@ -62,20 +62,26 @@ You only need Windows to run it. because you may not have the WSL environment.
 
 ## Prerequisites
 
+### Clouds
+
 * IBM Cloud Account (Free)  
 Go to https://cloud.ibm.com/ and sign up for a free account. Your credit card information is needed for launch the Kubernetes cluster. However, you will not be charged for this tutorial.  
 
 > ⚠️ Please set spending notification to avoid anormaly billings. https://cloud.ibm.com/billing/spending-notifications
 
+### Domain Names
+
 * Your domain name ($8.03/year- )  
 If you don't have domains. Go to https://cloudflare.com/ and buy a cheap domain name ($8.03/year for .com)
 
+### DNS
+
 * Cloudflare Account (Free)  
 Go to https://cloudflare.com/ and sign up free account. Please create the zone as your domain name, then update your domain registrar's Name server 1,2 to Cloudflare's them.  
-
 *OR*
-
-* AWS Account for Route 53  
+* AWS Account for Route 53 ($0.50/1 hosted zone)  
+  $0.50 per Hosted Zone for the first 25 Hosted Zones  
+  You will also need to install and configure the AWS CLI. https://awscli.amazonaws.com/AWSCLIV2.msi
 
 ## Setup IBM Kubernetes cluster
 
@@ -152,7 +158,7 @@ move ~/Downloads/apikey.json $home/.kube/cluster-01-apikey.json
 Make sure you have selected a plan "Free" cluster. Usually, the cluster created in the us-south(Dallas) region, however sometimes creates it in another region.  
 
 > ⚠️ The free cluster is automatically forced to delete after 30 days without charges. Free!  
-> ⚠️ It's recommended to upgrade to 1.18 for master and worker nodes.
+> ⚠️ It's recommended to upgrade to 1.18 for master and worker nodes. (It takes about 1 to 2 hours.)
 
 > ℹ️ In this document use the cluster name as 'cluster-01' and Default resource group.
 
@@ -565,6 +571,11 @@ lrwxrwxrwx 1 root root   13 Jul  6 06:31 ca.crt -> ..data/ca.crt
 lrwxrwxrwx 1 root root   14 Jul  6 06:31 tls.crt -> ..data/tls.crt
 lrwxrwxrwx 1 root root   14 Jul  6 06:31 tls.key -> ..data/tls.key
 ```
+
+> ℹ️ "kubectl exec" is not supported selectors (-l), use instead the following command.
+> ```
+> kubectl exec -it -n <namespace> (kubectl -n <namespace> get po -l <selector> -o jsonpath='{.items[0].metadata.name}') -- <command>
+> ```
 
 ## Istio Ingress Gateway test
 
