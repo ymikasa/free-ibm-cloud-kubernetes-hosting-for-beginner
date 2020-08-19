@@ -1,4 +1,4 @@
-# Free IBM Cloud Kubernetes hosting for beginners
+# Free IBM Cloud Kubernetes Hosting for Beginners
 
 How to use IBM Cloud Kubernetes(30days Free), Cloudflare DNS(and flarectl), Let's Encrypt(and cert-manager), and Isito Ingress Gateway(and VirtualService) for Powershell windows user.
 
@@ -7,8 +7,58 @@ How to use IBM Cloud Kubernetes(30days Free), Cloudflare DNS(and flarectl), Let'
 Ensure to deploy the Bookinfo Istio example application with the below public URL.  
 https://sample.example.com:${node_port}/productpage
 
-> ⚠️ This document is written for the Windows Powershell users.
-You only need the Windows to run it. because you may not have the WSL environment.
+> ⚠️ This document is written for Windows Powershell users.
+You only need Windows to run it. because you may not have the WSL environment.
+
+<details><summary>Table of Contents</summary>
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=2 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+- [Objectives](#objectives)
+- [Prerequisites](#prerequisites)
+- [Setup IBM Kubernetes cluster](#setup-ibm-kubernetes-cluster)
+  - [Value definitions explanation](#value-definitions-explanation)
+  - [Create the API key for CLI](#create-the-api-key-for-cli)
+  - [Create the Kubernetes (30days Free) cluster](#create-the-kubernetes-30days-free-cluster)
+- [Install tools](#install-tools)
+  - [Install Scoop and jq(1.6), go(1.14.4), kubectl (1.18.5), helm(3.2.4), and IBM Cloud CLI+Plugin](#install-scoop-and-jq16-go1144-kubectl-1185-helm324-and-ibm-cloud-cliplugin)
+  - [Install istioctl (1.6.8)](#install-istioctl-168)
+  - [Install flarectl (Cloudflare)](#install-flarectl-cloudflare)
+- [IBM Cloud Login](#ibm-cloud-login)
+  - [Login](#login)
+  - [Set KUBECONFIG](#set-kubeconfig)
+  - [Check cluster and public IP address of the node](#check-cluster-and-public-ip-address-of-the-node)
+  - [Set Your subdomain domain to values](#set-your-subdomain-domain-to-values)
+  - [Assign URL to node_ip address (Cloudflare)](#assign-url-to-node_ip-address-cloudflare)
+  - [Assign URL to node_ip address (AWS Route 53)](#assign-url-to-node_ip-address-aws-route-53)
+  - [Ping check](#ping-check)
+- [Install applications](#install-applications)
+  - [Install kubed](#install-kubed)
+  - [Install Istio](#install-istio)
+  - [Install certmanager](#install-certmanager)
+    - [Set the API key to Kubernetes secret (Cloudflare)](#set-the-api-key-to-kubernetes-secret-cloudflare)
+    - [Set the API key to Kubernetes secret (AWS Route 53)](#set-the-api-key-to-kubernetes-secret-aws-route-53)
+    - [Deploy Cluster Issuer (Cloudflare)](#deploy-cluster-issuer-cloudflare)
+    - [Deploy Cluster Issuer (AWS Route 53)](#deploy-cluster-issuer-aws-route-53)
+    - [Deploy Certificate Request](#deploy-certificate-request)
+      - [Deploy](#deploy)
+      - [Check logs (optional)](#check-logs-optional)
+    - [Export certificate (optional)](#export-certificate-optional)
+    - [Import (optional)](#import-optional)
+    - [Annotate Certificate Secret for using it across namespaces](#annotate-certificate-secret-for-using-it-across-namespaces)
+    - [Istio Ingress Gateway Certificate validation](#istio-ingress-gateway-certificate-validation)
+- [Istio Ingress Gateway test](#istio-ingress-gateway-test)
+  - [Deploy BookInfo application](#deploy-bookinfo-application)
+    - [Modify kustomize patch for your domain](#modify-kustomize-patch-for-your-domain)
+    - [Deploy](#deploy-1)
+  - [Check the BookInfo URL](#check-the-bookinfo-url)
+  - [Delete BookInfo application](#delete-bookinfo-application)
+
+<!-- /code_chunk_output -->
+
+</details>
 
 ## Prerequisites
 
@@ -37,7 +87,7 @@ Go to https://cloudflare.com/ and sign up free account. Please create the zone a
 
 ### Value definitions explanation
 
-#### Values for tools
+<details><summary>Values for tools</summary>
 
 | Key  |  Sample value | Description |
 | - | - |- |
@@ -53,7 +103,9 @@ Go to https://cloudflare.com/ and sign up free account. Please create the zone a
 | $domain | example.com | Your domain |
 | $subdomain | sample | Created subdomain |
 
-#### Values (Cloudflare)
+</details>
+
+<details><summary>Values (Cloudflare)</summary>
 
 | Key  |  Sample value | Description |
 | - | - |- |
@@ -61,7 +113,9 @@ Go to https://cloudflare.com/ and sign up free account. Please create the zone a
 | $env:CF_API_KEY | ****** | Cloudflare API Key |
 | $cloudflare_email | yourmailaddress@example.com | |
 
-#### Values (AWS Route 53)
+</details>
+
+<details><summary>Values (AWS Route 53)</summary>
 
 | Key  |  Sample value | Description |
 | - | - |- |
@@ -69,7 +123,9 @@ Go to https://cloudflare.com/ and sign up free account. Please create the zone a
 | $env:AWS_SECRET_ACCESS_KEY | ****** | AWS Secret Access Key |
 | $env:AWS_REGION | us-east-2 | AWS Region |
 
-#### Files
+</details>
+
+<details><summary>Files</summary>
 
 | File  | Description |
 | - | - |
@@ -80,6 +136,8 @@ Go to https://cloudflare.com/ and sign up free account. Please create the zone a
 | ${env:KUBECONFIG}.bak | Backup of kubeconfig file |
 | clusterissuer-letsencrypt-prod.yaml | Your cert-manager ClusterIssuer |
 | pilot-k8s.yaml | Istio install parameters, reduced request cpu and memory |
+
+</details>
 
 ### Create the API key for CLI
 
@@ -106,7 +164,7 @@ Make sure you have selected a plan "Free" cluster. Usually, the cluster created 
 
 ## Install tools
 
-### Install Scoop and jq(1.6), go(1.14.4), kubectl (1.18.5), helm(3.2.4), and IBM Cloud CLI+Plugin
+### Install Scoop and jq(1.6+), go(1.14.4+), kubectl (1.18.5+), helm(3.2.4+), and IBM Cloud CLI+Plugin
 
 ```powershell
 iwr -useb get.scoop.sh | iex
@@ -122,11 +180,11 @@ mkdir $home/.kube
 Set-ExecutionPolicy RemoteSigned -scope CurrentUser
 ```
 
-### Install istioctl (1.6.5)
+### Install istioctl (1.6.8+)
 
 ```powershell
-curl -kLO https://github.com/istio/istio/releases/download/1.6.4/istioctl-1.6.5-win.zip
-7z x istioctl-1.6.5-win.zip
+curl -kLO https://github.com/istio/istio/releases/download/1.6.8/istioctl-1.6.8-win.zip
+7z x istioctl-1.6.8-win.zip
 cp istioctl.exe $env:userprofile\scoop\shims <# Copy to any path on $env:PATH #>
 ```
 
@@ -169,7 +227,7 @@ The kubeconfig YAML file will be overwritten by the IBM cloud CLI command.
 ```powershell
 $env:KUBECONFIG="$home/.kube/config-cluster-01.yaml"
 if (Test-Path $env:KUBECONFIG) {
-  move $env:KUBECONFIG "${env:KUBECONFIG}.bak"
+  move -Force $env:KUBECONFIG "${env:KUBECONFIG}.bak"
 }
 ibmcloud ks cluster config -c cluster-01
 ```
@@ -179,15 +237,18 @@ ibmcloud ks cluster config -c cluster-01
 ```powershell
 kubectl get no -o wide
 ```
+Results:
 ```text
-NAME            STATUS   ROLES    AGE   VERSION       INTERNAL-IP     EXTERNAL-IP      OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
-10.144.183.23   Ready    <none>   86m   v1.18.6+IKS   10.144.183.23   169.51.203.243   Ubuntu 16.04.6 LTS   4.4.0-185-generic   containerd://1.3.4
+NAME          STATUS ROLES  AGE VERSION     INTERNAL-IP   EXTERNAL-IP    OS-IMAGE           KERNEL-VERSION    CONTAINER-RUNTIME
+10.144.183.23 Ready  <none> 86m v1.18.6+IKS 10.144.183.23 169.51.203.243 Ubuntu 16.04.6 LTS 4.4.0-185-generic containerd://1.3.4
+```
+```powershell
 $node_ip=ibmcloud ks workers -c cluster-01 --worker-pool default --json | jq -r .[0].publicIP
 ```
 
 ### Set Your subdomain domain to values
 
-```
+```powershell
 $domain="example.com" <# Your domain #>
 $subdomain="sample"
 ```
@@ -207,7 +268,7 @@ if ($dns_id) {
 
 ### Assign URL to node_ip address (AWS Route 53)
 
-```
+```powershell
 $dns_id=aws route53 list-hosted-zones-by-name --dns-name "$domain" --query "HostedZones[?Name=='$domain.'].Id" --output text
 $action = "CREATE"
 if ((aws route53 list-resource-record-sets --hosted-zone-id $dns_id `
@@ -228,7 +289,7 @@ aws route53 change-resource-record-sets --hosted-zone-id $dns_id --change-batch 
 
 ### Ping check
 
-```
+```powershell
 ipconfig /flushdns
 ping -n 3 "$subdomain.$domain" <# Your subdomain.domain #>
 ```
@@ -250,32 +311,33 @@ helm install kubed appscode/kubed --namespace kube-system --wait
 istioctl install -f pilot-k8s.yaml
 kubectl get po -A
 ```
+Results:
 ```text
-NAMESPACE      NAME                                         READY   STATUS    RESTARTS   AGE
-ibm-system     addon-catalog-source-sndz7                   1/1     Running   0          8d
-ibm-system     catalog-operator-645796fbdf-b5q5k            1/1     Running   0          8d
-ibm-system     olm-operator-7bf4dbc978-lvfz5                1/1     Running   0          8d
-istio-system   istio-ingressgateway-cc7f64cb-krfqx          1/1     Running   0          37s
-istio-system   istiod-5c8bd665c7-skmk8                      1/1     Running   0          52s
-istio-system   prometheus-7db4d5f66-jnpb9                   2/2     Running   0          37s
-kube-system    calico-kube-controllers-656c5785dd-twvjc     1/1     Running   0          8d
-kube-system    calico-node-zpzjg                            1/1     Running   0          8d
-kube-system    coredns-7b56dd58f7-7cmmj                     1/1     Running   0          8d
-kube-system    coredns-7b56dd58f7-cf6p8                     1/1     Running   0          8d
-kube-system    coredns-7b56dd58f7-ngz89                     1/1     Running   0          8d
-kube-system    coredns-autoscaler-777bf994bf-t27k4          1/1     Running   0          8d
-kube-system    dashboard-metrics-scraper-76756886dc-5vmzv   1/1     Running   0          8d
-kube-system    ibm-keepalived-watcher-rzcfl                 1/1     Running   0          8d
-kube-system    ibm-master-proxy-static-10.76.68.138         2/2     Running   0          8d
-kube-system    kubed-599cb4b8bc-2fbzk                       1/1     Running   0          85m
-kube-system    kubernetes-dashboard-5c898cc4d-bsldd         1/1     Running   2          8d
-kube-system    metrics-server-58d6cb57cd-pfbrv              2/2     Running   0          8d
-kube-system    vpn-79845b6f9d-mpclq                         1/1     Running   0          8d
+NAMESPACE    NAME                                       READY STATUS  RESTARTS AGE
+ibm-system   addon-catalog-source-sndz7                 1/1   Running 0        8d
+ibm-system   catalog-operator-645796fbdf-b5q5k          1/1   Running 0        8d
+ibm-system   olm-operator-7bf4dbc978-lvfz5              1/1   Running 0        8d
+istio-system istio-ingressgateway-cc7f64cb-krfqx        1/1   Running 0        37s
+istio-system istiod-5c8bd665c7-skmk8                    1/1   Running 0        52s
+istio-system prometheus-7db4d5f66-jnpb9                 2/2   Running 0        37s
+kube-system  calico-kube-controllers-656c5785dd-twvjc   1/1   Running 0        8d
+kube-system  calico-node-zpzjg                          1/1   Running 0        8d
+kube-system  coredns-7b56dd58f7-7cmmj                   1/1   Running 0        8d
+kube-system  coredns-7b56dd58f7-cf6p8                   1/1   Running 0        8d
+kube-system  coredns-7b56dd58f7-ngz89                   1/1   Running 0        8d
+kube-system  coredns-autoscaler-777bf994bf-t27k4        1/1   Running 0        8d
+kube-system  dashboard-metrics-scraper-76756886dc-5vmzv 1/1   Running 0        8d
+kube-system  ibm-keepalived-watcher-rzcfl               1/1   Running 0        8d
+kube-system  ibm-master-proxy-static-10.76.68.138       2/2   Running 0        8d
+kube-system  kubed-599cb4b8bc-2fbzk                     1/1   Running 0        85m
+kube-system  kubernetes-dashboard-5c898cc4d-bsldd       1/1   Running 2        8d
+kube-system  metrics-server-58d6cb57cd-pfbrv            2/2   Running 0        8d
+kube-system  vpn-79845b6f9d-mpclq                       1/1   Running 0        8d
 ```
 
 > ℹ️ Why use the customize parameter in pilot-k8s.yaml? This is to minimize the memory definition required for startup. it's important in the free cloud.
 
-### Install certmanager
+### Install cert-manager
 
 ```powershell
 kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v0.15.1/cert-manager.crds.yaml
@@ -287,11 +349,12 @@ helm install `
   --version v0.15.1
 kubectl -n cert-manager get po
 ```
+Results:
 ```text
-NAME                                      READY   STATUS    RESTARTS   AGE
-cert-manager-7747db9d88-qll5c             1/1     Running   0          22s
-cert-manager-cainjector-87c85c6ff-bvtmx   1/1     Running   0          22s
-cert-manager-webhook-64dc9fff44-gc2b5     1/1     Running   0          22s
+NAME                                    READY STATUS  RESTARTS AGE
+cert-manager-7747db9d88-qll5c           1/1   Running 0        22s
+cert-manager-cainjector-87c85c6ff-bvtmx 1/1   Running 0        22s
+cert-manager-webhook-64dc9fff44-gc2b5   1/1   Running 0        22s
 ```
 
 #### Set the API key to Kubernetes secret (Cloudflare)
@@ -305,7 +368,8 @@ $cloudflare_email="yourmailaddress@example.com"
 kubectl -n cert-manager create secret generic cloudflare-api-key --from-literal=api-key.txt=$env:CF_API_KEY
 kubectl -n cert-manager get secret cloudflare-api-key -o yaml     
 ```
-```text
+Results:
+```yaml
 apiVersion: v1
 data:
   api-key.txt: NGE******g==
@@ -328,8 +392,8 @@ $letsenctypt_email="yourmailaddress@example.com"
 kubectl -n cert-manager create secret generic prod-route53-credentials-secret --from-literal=secret-access-key=$env:AWS_SECRET_ACCESS_KEY
 kubectl -n cert-manager get secret prod-route53-credentials-secret -o yaml
 ```
-
-```text
+Results:
+```yaml
 apiVersion: v1
 data:
   secret-access-key: NGE******g==
@@ -431,21 +495,22 @@ spec:
 "@ | Set-Content istio-ingressgateway-certs.yaml
 ```
 
-- Deploy
+##### Deploy
 
 ```powershell
 kubectl apply -f istio-ingressgateway-certs.yaml
 ```
 
-Check logs (optional)
+##### Check logs (optional)
 
 ```
 kubectl -n cert-manager logs -l app=cert-manager -c cert-manager
 ```
+Results:
 ```text
-I0706 06:31:20.368769       1 dns.go:133] cert-manager/controller/challenges/Check "msg"="waiting DNS record TTL to allow the DNS01 record to propagate for domain" "dnsName"="******.com" "domain"="******.com" "resource_kind"="Challenge" "resource_name"="istio-ingressgateway-certs-2862066918-2138811768-146870716" "resource_namespace"="istio-system" "type"="dns-01" "fqdn"="_acme-challenge.******.com." "ttl"=60
+I0706 06:31:20.368769 1 dns.go:133] cert-manager/controller/challenges/Check "msg"="waiting DNS record TTL to allow the DNS01 record to propagate for domain" "dnsName"="******.com" "domain"="******.com" "resource_kind"="Challenge" "resource_name"="istio-ingressgateway-certs-2862066918-2138811768-146870716" "resource_namespace"="istio-system" "type"="dns-01" "fqdn"="_acme-challenge.******.com." "ttl"=60
 ...
-I0706 06:33:45.362372       1 sync.go:102] cert-manager/controller/orders "msg"="Order has already been completed, cleaning up any owned Challenge resources" "resource_kind"="Order" "resource_name"="istio-ingressgateway-certs-2862066918-2138811768" "resource_namespace"="istio-system"
+I0706 06:33:45.362372 1 sync.go:102] cert-manager/controller/orders "msg"="Order has already been completed, cleaning up any owned Challenge resources" "resource_kind"="Order" "resource_name"="istio-ingressgateway-certs-2862066918-2138811768" "resource_namespace"="istio-system"
 ```
 
 Check request result.
@@ -453,12 +518,13 @@ Check request result.
 ```powershell
 kubectl -n istio-system describe certificaterequest
 ```
+Results:
 ```text
 Events:
-  Type    Reason             Age    From          Message
-  ----    ------             ----   ----          -------
-  Normal  OrderCreated       2m50s  cert-manager  Created Order resource istio-system/istio-ingressgateway-certs-2862066918-2138811768
-  Normal  CertificateIssued  12s    cert-manager  Certificate fetched from issuer successfully
+ Type   Reason            Age   From         Message
+ ----   ------            ----  ----         -------
+ Normal OrderCreated      2m50s cert-manager Created Order resource istio-system/istio-ingressgateway-certs-2862066918-2138811768
+ Normal CertificateIssued 12s   cert-manager Certificate fetched from issuer successfully
 ```
 
 > ℹ️ For AWS Route 53, If you got failed results, Please check [IAM policy](https://cert-manager.io/docs/configuration/acme/dns01/route53/).
@@ -492,8 +558,9 @@ kubectl annotate secret istio-ingressgateway-certs -n istio-system kubed.appscod
 Validate istio ingress gateway's pre-defined mount point /etc/istio/ingressgateway-certs
 
 ```powershell
-kubectl exec -it -n istio-system (kubectl -n istio-system get po -l istio=ingressgateway -o jsonpath='{.items[0].metadata.name}') -- ls -al /etc/istio/ingressgateway-certs
+kubectl exec -it -n istio-system $(k -n istio-system get pods -l istio=ingressgateway -o jsonpath='{.items[0].metadata.name}') `-`- ls -al /etc/istio/ingressgateway-certs
 ```
+Results:
 ```text
 total 4
 drwxrwxrwt 3 root root  140 Jul  6 06:34 .
@@ -514,7 +581,7 @@ lrwxrwxrwx 1 root root   14 Jul  6 06:31 tls.key -> ..data/tls.key
 
 ### Deploy BookInfo application
 
-- Modify kustomize patch for your domain
+#### Modify kustomize patch for your domain
 
 ```powershell
 @"
@@ -524,20 +591,21 @@ lrwxrwxrwx 1 root root   14 Jul  6 06:31 tls.key -> ..data/tls.key
 "@ | Set-Content bookinfo/overlays/bookinfo-gateway-patch.yaml
 ```
 
-- Deploy
+#### Deploy
 
 ```powershell
 kubectl apply -k bookinfo/overlays
 kubectl -n bookinfo get po -w
 ```
+Results:
 ```text
-NAME                              READY   STATUS    RESTARTS   AGE
-details-v1-558b8b4b76-j2tff       2/2     Running   0          78s
-productpage-v1-6987489c74-j4tcg   2/2     Running   0          77s
-ratings-v1-7dc98c7588-2l9kq       2/2     Running   0          77s
-reviews-v1-7f99cc4496-m7gwq       2/2     Running   0          76s
-reviews-v2-7d79d5bd5d-t5gkq       2/2     Running   0          75s
-reviews-v3-7dbcdcbc56-txc57       2/2     Running   0          75s
+NAME                            READY STATUS  RESTARTS AGE
+details-v1-558b8b4b76-j2tff     2/2   Running 0        78s
+productpage-v1-6987489c74-j4tcg 2/2   Running 0        77s
+ratings-v1-7dc98c7588-2l9kq     2/2   Running 0        77s
+reviews-v1-7f99cc4496-m7gwq     2/2   Running 0        76s
+reviews-v2-7d79d5bd5d-t5gkq     2/2   Running 0        75s
+reviews-v3-7dbcdcbc56-txc57     2/2   Running 0        75s
 ```
 
 > ⚠️ Deploy with overridden file "bookinfo/overlays/bookinfo-gateway-patch.yaml" by your domain. The bookinfo/base directory contain basic setting as template.
